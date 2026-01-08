@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie List</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+
+<body>
+    <div id="app" class="container mt-5">
+        <h1 class="mb-4 text-center text-primary">🎬 Top 10 Movies</h1>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <table class="table table-striped table-hover align-middle text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">Title</th>
+                            <th scope="col">Year</th>
+                            <th scope="col">Rating ⭐</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="movie in movies" :key="movie.title" class="table-light">
+                            <td class="fw-bold">{{ movie.title }}</td>
+                            <td>{{ movie.year }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ movie.rating }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-evenly mt-3 gap-2 mb-5">
+            <button v-if="inputVar < 1" @click="addMovie" class="btn btn-primary btn-lg shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> Add Movie
+            </button>
+            <button v-if="inputVar < 1" @click="removeMovie" class="btn btn-danger btn-lg shadow-sm">
+                <i class="bi bi-dash-circle me-1"></i> Remove Movie
+            </button>
+            <button v-if="showLabelAndInputandCancel" @click="cancelEntry" class="btn btn-secondary btn-lg shadow-sm">
+                <i class="bi bi-dash-circle me-1"></i> ❌ Cancel
+            </button>
+        </div>
+
+        <div v-if="showLabelAndInputandCancel"
+            class="d-flex flex-row flex-md-row justify-content-center mt-3 gap-2 mb-5">
+            <label>{{ filmLabel }}</label>
+            <input :type="inputType" @keyup.enter="handleEnter"
+                class="form-control form-control-lg rounded-pill shadow-sm" :placeholder="filmPlaceholder"
+                v-model="inputMovieInfo" title="Movie input field">
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script>
+        const { createApp, reactive, ref, computed } = Vue;
+        createApp({
+            setup() {
+                const showLabelAndInputandCancel = ref(false);
+                const filmLabel = ref('');
+                const inputType = ref('text');
+                const inputMovieInfo = ref('');
+                const filmPlaceholder = ref('');
+                const inputVar = ref(0);
+
+                function addMovie() {
+                    showLabelAndInputandCancel.value = true;
+                    filmLabel.value = 'Enter Movie Title:';
+                    filmPlaceholder.value = 'Enter movie title';
+                    inputType.value = 'text';
+                    inputVar.value = 1;
+                }
+
+                const newMovie = reactive({
+                    title: '',
+                    year: null,
+                    rating: null
+                });
+
+                function emptyMovieInfo() {
+                    newMovie.title = '';
+                    newMovie.year = null;
+                    newMovie.rating = null;
+                }
+
+                function handleEnter() {
+                    if (inputVar.value === 1) {
+                        if (inputMovieInfo.value.trim() === '') {
+                            filmPlaceholder.value = 'Title cannot be empty. Please enter a valid title.';
+                        } else {
+                            newMovie.title = inputMovieInfo.value.trim();
+                            inputMovieInfo.value = '';
+                            filmLabel.value = 'Enter Release Year:';
+                            filmPlaceholder.value = 'Enter release year';
+                            inputType.value = 'number';
+                            inputVar.value = 2;
+                            return;
+                        }
+                    }
+                    if (inputVar.value === 2) {
+                        if (inputMovieInfo.value > 4000 || inputMovieInfo.value < 1600) {
+                            inputMovieInfo.value = "";
+                            filmPlaceholder.value = 'Please enter a valid year between 1600 and 4000.';
+                        } else {
+                            newMovie.year = inputMovieInfo.value;
+                            inputMovieInfo.value = "";
+                            filmLabel.value = 'Enter Movie Rating:';
+                            filmPlaceholder.value = 'Enter movie rating';
+                            inputType.value = 'number';
+                            inputVar.value = 3;
+                            return;
+                        }
+                    }
+                    if (inputVar.value === 3) {
+                        if (inputMovieInfo.value < 0 || inputMovieInfo.value > 10) {
+                            inputMovieInfo.value = "";
+                            filmPlaceholder.value = 'Please enter a rating between 0 and 10.';
+                        } else if (inputMovieInfo.value.trim() === '') {
+                            filmPlaceholder.value = 'Rating cannot be empty. Please enter a valid rating.';
+                        } else {
+                            newMovie.rating = inputMovieInfo.value;
+                            inputMovieInfo.value = "";
+                            filmLabel.value = 'Enter Movie Rating:';
+                            filmPlaceholder.value = 'Enter movie rating';
+                            inputType.value = 'number';
+                            movies.push({
+                                title: newMovie.title,
+                                year: newMovie.year,
+                                rating: newMovie.rating
+                            });
+                            emptyMovieInfo();
+                            showLabelAndInputandCancel.value = false;
+                            inputVar.value = 0;
+                        }
+                    }
+                    if (inputVar.value === 4) {
+                        const index = movies.findIndex(movie => movie.title.toLowerCase() === inputMovieInfo.value.toLowerCase());
+                        if (index !== -1) {
+                            movies.splice(index, 1);
+                            emptyMovieInfo();
+                            showLabelAndInputandCancel.value = false;
+                            inputVar.value = 0;
+                        } else {
+                            inputMovieInfo.value = "";
+                            filmPlaceholder.value = "Movie not found. Please enter a valid title.";
+                            return;
+                        }
+                    }
+                }
+
+                function cancelEntry() {
+                    inputMovieInfo.value = '';
+                    filmLabel.value = '';
+                    filmPlaceholder.value = '';
+                    emptyMovieInfo();
+                    inputVar.value = 0;
+                    showLabelAndInputandCancel.value = false;
+                }
+
+                function removeMovie() {
+                    showLabelAndInputandCancel.value = true;
+                    filmLabel.value = 'Enter Movie Title to Remove:';
+                    filmPlaceholder.value = 'Enter movie title to remove';
+                    inputType.value = 'text';
+                    inputVar.value = 4;
+                }
+
+                const movies = reactive([
+                    { title: "The Shawshank Redemption", year: 1994, rating: 9.3 },
+                    { title: "The Godfather", year: 1972, rating: 9.2 },
+                    { title: "The Dark Knight", year: 2008, rating: 9.0 },
+                    { title: "Schindler's List", year: 1993, rating: 8.9 },
+                    { title: "The Lord of the Rings: The Return of the King", year: 2003, rating: 8.9 },
+                    { title: "Pulp Fiction", year: 1994, rating: 8.9 },
+                    { title: "The Good, the Bad and the Ugly", year: 1966, rating: 8.8 },
+                    { title: "Fight Club", year: 1999, rating: 8.8 },
+                    { title: "Forrest Gump", year: 1994, rating: 8.8 },
+                    { title: "Inception", year: 2010, rating: 8.7 }
+                ]);
+
+                return {
+                    showLabelAndInputandCancel,
+                    filmLabel,
+                    inputType,
+                    movies,
+                    inputMovieInfo,
+                    filmPlaceholder,
+                    addMovie,
+                    handleEnter,
+                    cancelEntry,
+                    inputVar,
+                    removeMovie
+                }
+            }
+        }
+        ).mount('#app');
+    </script>
+</body>
+
+</html>
